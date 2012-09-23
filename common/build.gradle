@@ -1,0 +1,6 @@
+dependencies {
+    compile 'joda-time:joda-time:2.1'
+    compile 'org.joda:joda-convert:1.2'
+    compile 'org.scalatest:scalatest_2.9.2:1.8'
+    compile 'com.hazelcast:hazelcast-client:2.3.1'
+}

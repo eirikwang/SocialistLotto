@@ -1,0 +1,5 @@
+dependencies {
+    compile project(':common')
+    compile project(':server')
+    compile(group: 'com.typesafe', name: 'play-mini_2.9.2', version: '2.1-08292012')
+}
