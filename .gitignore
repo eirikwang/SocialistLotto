@@ -2,5 +2,10 @@ target/
 *.iml
 *.ipr
 *.iws
+.gradle
+*build/
+*logs/
+*out/
+*RUNNING_PID
 
 
