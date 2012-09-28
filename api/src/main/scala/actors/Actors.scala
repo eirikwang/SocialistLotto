@@ -10,7 +10,7 @@ import play.api.libs.iteratee.Concurrent.broadcast
 import play.api.libs.concurrent._
 import play.api.libs.concurrent.execution.defaultContext
 import org.clarity.demo.cqrs.domain.Project
-
+/*
 class ChatRoomActor extends Actor {
 
   import ChatRoomActor._
@@ -56,3 +56,4 @@ object ChatRoomActor {
   lazy val ref = system.actorOf(Props[ChatRoomActor])
 
 }
+*/

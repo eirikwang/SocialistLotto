@@ -10,7 +10,7 @@ import org.clarity.demo.cqrs.domain.Project
 object App extends com.typesafe.play.mini.Application {
 
   def route = Routes(
-  new ProjectAction().route
+  //new ProjectAction().route
   )
 }
 
