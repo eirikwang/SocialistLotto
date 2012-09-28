@@ -1,6 +1,6 @@
 package org.clarity.demo.cqrs.server.actors
 
-import akka.actor.{ActorRef, Props, ActorSystem}
+import akka.actor.{Actor, ActorRef, Props, ActorSystem}
 import akka.pattern.ask
 
 import db.{Hazelcast, Database}
@@ -9,33 +9,55 @@ import akka.util.duration._
 import akka.dispatch.{Future, Await, Create}
 import db.Hazelcast.GetMap
 import org.clarity.demo.cqrs.server.actors.PaymentProcessor.Send
-import org.clarity.demo.cqrs.server.objects.UserAccount
+import org.clarity.demo.cqrs.server.objects.{UserTransaction, UserAccount}
+import java.util
+import scala.util.Random
 
-object Testrunner extends App {
+class Testrunner {
 
-  implicit val timeout = Timeout(5 seconds)
-  calculate(nrOfWorkers = 4, nrOfElements = 10000, nrOfMessages = 10000)
-
+  implicit val timeout = Timeout(60 seconds)
   // actors and messages ...
+  val system = ActorSystem("PiSystem")
+  val db = system.actorOf(Props[Database], name = "db")
+  val paymentProsessor = system.actorOf(Props[PaymentProcessor], name = "paymentProsessor")
+  def userListener = system.actorOf(Props[UserListener], name = "userListener")
 
-  def calculate(nrOfWorkers: Int, nrOfElements: Int, nrOfMessages: Int) {
+  def startup() {
     // Create an Akka system
-    val system = ActorSystem("PiSystem")
 
     // create the result listener, which will print the result and
     // shutdown the system
-    val listener = system.actorOf(Props[Database], name = "db")
-    listener ! Create
+    println("Creating db")
+    Await.result(db ? Create, timeout.duration)
+    println("Db created")
+    system.eventStream.subscribe(userListener, classOf[UserAccount])
 
-    val actorFor: ActorRef = system.actorOf(Props[Hazelcast])
-    val awaitable: Future[Any] = actorFor ? GetMap("accounts")
-    // create the master
-    val paymentProsessor = system.actorOf(Props[PaymentProcessor], name = "paymentProsessor")
-    println("sending: ")
-    paymentProsessor ! Send(Transaction(1, 2, 100.0))
-    paymentProsessor ! Send(Transaction(2, 1, 100.0))
+    val awaitable: Future[Any] = system.actorFor("/user/db/hazelcast") ? GetMap("accounts")
+    val map: util.Map[Long, UserAccount] = Await.result(awaitable, timeout.duration).asInstanceOf[util.Map[Long, UserAccount]]
 
-    Thread.sleep(99999999)
+    for (i<-(0 until 100)) map.put(i, new UserAccount(i, 100))
+    map.put(2L, new UserAccount(2, 100))
+    println("User added")
 
+  }
+  def pay() {    // create the master
+    paymentProsessor ! Send(UserTransaction(Random.nextInt(100), Random.nextInt(100), 1.6))
+  }
+}
+class UserListener extends Actor{
+  protected def receive = {
+    case u: UserAccount => println("Account changed: " + u)
+  }
+}
+  object runner {
+
+  def main(args: Array[String]) {
+    val app = new Testrunner
+    app.startup
+    println("Started Testrunner Application")
+    while (true) {
+      Thread.sleep(100)
+      app.pay
+    }
   }
 }
