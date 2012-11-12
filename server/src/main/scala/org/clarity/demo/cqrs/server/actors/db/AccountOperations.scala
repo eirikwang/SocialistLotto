@@ -1,42 +1,37 @@
 package org.clarity.demo.cqrs.server.actors.db
 
-import akka.actor.{Props, ActorRef, Actor}
+import akka.actor.{ActorRef, Actor}
 import akka.pattern.ask
 import akka.dispatch.Await
 import akka.util.Timeout
 import akka.util.duration._
-import org.clarity.demo.cqrs.server.actors.db.AccountOperation._
 import com.hazelcast.core.Transaction
 import org.clarity.demo.cqrs.server.actors.db.AccountOperation.Put
 import org.clarity.demo.cqrs.server.objects.UserAccount
-import org.clarity.demo.cqrs.server.actors.db.Hazelcast.{GetClient, GetTransaction, GetMap}
+import org.clarity.demo.cqrs.server.actors.db.Hazelcast.{GetClient, GetMap}
 import org.clarity.demo.cqrs.server.actors.db.AccountOperation.Change
-import org.clarity.demo.cqrs.server.actors.db.AccountOperation.BeginTransaction
 import org.clarity.demo.cqrs.server.actors.db.AccountOperation.Get
 import com.hazelcast.client.HazelcastClient
 
 
 object AccountOperation {
 
-  case class BeginTransaction()
-
-  case class CommitTransaction()
-
-  case class Get(id: Long)
-
-  case class Put(account: UserAccount)
-
-  case class Change(id: Long, balChange: Double)
-
+  trait AccountEvent
+  case class BeginTransaction() extends AccountEvent
+  case class CommitTransaction() extends AccountEvent
+  case class Get(id: Long) extends AccountEvent
+  case class Put(account: UserAccount) extends AccountEvent
+  case class Change(id: Long, balChange: Double) extends AccountEvent
 }
 
-class AccountOperation extends Actor {
+class AccountOperation extends Actor with AccountOps{
   implicit val timeout = Timeout(5 seconds)
 
-  def hazelcast: ActorRef = context.actorFor("/user/db/hazelcast")
+  def hazelcast: ActorRef = context.actorFor("/user/persistence/hazelcast")
 
   protected def receive: Receive = {
     case get: Get => sender ! account(get)
+
     case put: Put => {
       context.system.eventStream.publish(put.account)
       accounts.put(put.account.id, put.account)
@@ -49,13 +44,13 @@ class AccountOperation extends Actor {
       accounts.put(put.id, newAccount)
       try {
         trans.commit()
-      }catch {
-        case e:Exception => trans.rollback()
+      } catch {
+        case e: Exception => trans.rollback()
       }
       context.system.eventStream.publish(newAccount)
-      sender!newAccount
+      sender ! newAccount
     }
-    case o:Object => println("illegal " + o); throw new Exception("illegal")
+    case o: Object => println("illegal " + o); throw new Exception("illegal")
   }
 
   def accounts = {

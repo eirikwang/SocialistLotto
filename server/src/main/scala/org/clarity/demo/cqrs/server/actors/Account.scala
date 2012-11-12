@@ -1,9 +1,7 @@
 package org.clarity.demo.cqrs.server.actors
 
-import akka.actor.{Props, Actor}
+import akka.actor.{Failed, ActorRef, Props, Actor}
 import akka.pattern.ask
-import db.AccountOperation
-import db.AccountOperation._
 import akka.util.Timeout
 import akka.util.duration._
 import akka.dispatch.Await
@@ -12,50 +10,87 @@ import db.AccountOperation.Change
 import db.AccountOperation.Get
 import org.clarity.demo.cqrs.server.objects.UserAccount
 import org.clarity.demo.cqrs.server.objects.UserAccount
-import org.clarity.demo.cqrs.server.actors.ReceiveAction
-import org.clarity.demo.cqrs.server.actors.TransactionStatus
-import org.clarity.demo.cqrs.server.actors.SendAction
+import org.clarity.demo.cqrs.server.actors.Account.{AccountOperation, Balance, ReceiveAction, SendAction}
+import persistence.AccountStorage.{AccountDetail, BalanceOperation}
+import org.clarity.demo.cqrs.server.exceptions.AccountNotAvailableException
+import akka.event.LoggingReceive
 
-case class SendAction(to: Long, amount: Double)
-case class ReceiveAction(from: Long, amount: Double)
 
 abstract case class TransactionStatus()
-case object Rejected extends TransactionStatus
-case object Cleared extends TransactionStatus
+case class Rejected(oper: AccountOperation) extends TransactionStatus
+case class Cleared(oper: AccountOperation) extends TransactionStatus
 
 
-class Account() extends Actor {
-  var accountOps = context.actorOf(Props[AccountOperation], "acountops")
+trait AccountChange{
+  implicit def account:Long
+  implicit def participant:Long
+  implicit def amount:Double
+  def balanceChange():Double = {
+    this match {
+      case a: SendAction => -a.amount
+      case a: ReceiveAction => a.amount
+    }
+  }
+}
+object Account {
+  trait AccountOperation
+  case class SendAction(participant: Long, account:Long, amount: Double, send:ActorRef) extends AccountOperation with AccountChange{
+    def genReceiveAction() = ReceiveAction(participant, account, amount)
+  }
+  case class ReceiveAction(account: Long, participant:Long, amount: Double) extends AccountOperation with AccountChange
+  case object Balance extends AccountOperation
+}
+
+
+class Account(account: AccountDetail) extends Actor {
+  var accountOps = context.actorFor("/user/persistence/accounts")
   implicit val timeout = Timeout(5 seconds)
+  var backlog = IndexedSeq.empty[(ActorRef, AccountOperation)]
 
+  var balance:Double = 0
+  protected def receive = uninitialized
 
-  case object AddIntrest
-  case object Balance
-
-
-  protected def receive: PartialFunction[Any, Unit] = {
-    //case AddIntrest => balance = balance * 1.05
-    //case Balance => sender ! balance
+  def uninitialized = LoggingReceive {
+    // Response from prestart operations.
+    case AccountBalance(account: Long, balance: Double) => {
+      this.balance = balance
+      context.become(initialized)
+      println("running backlog")
+      for ((replyTo, msg) ← backlog) self.tell(msg, sender = replyTo)
+    }
+    case ao:AccountOperation => {
+      println("backlogging: " + ao)
+      backlog = backlog :+ (sender, ao)
+    }
+    case o: Object => {
+      println("unknown2: " + o)
+    }
+  }
+  def initialized: Receive = {
+    case Balance => sender ! AccountBalance(account.id, balance)
     case p: SendAction => {
-      val account:UserAccount = getAccount(p.to)
-      if (account.balance < p.amount){
+      println("Send: " + p)
+      if (balance < p.amount){
         sender ! Rejected
-      }
-      else {
-        val ua:UserAccount = Await.result(accountOps? Change(account.id, - p.amount), timeout.duration).asInstanceOf[UserAccount]
-        sender ! Cleared
+      } else {
+        balance -= p.amount
+        accountOps ! p
+        p.send ! p.genReceiveAction()
       }
     }
     case p: ReceiveAction => {
-      val account: UserAccount = getAccount(p.from)
-      val ua:UserAccount = Await.result(accountOps? Change(account.id, p.amount), timeout.duration).asInstanceOf[UserAccount]
-      context.system.eventStream.publish(ua)
+      println("receive: " + p)
+      balance += p.amount
+      accountOps ! p
+      context.system.eventStream.publish(AccountBalance(account.id, balance))
       sender ! Cleared
     }
-
+    case o: Object => {
+      println("unknown: " + o)
+    }
   }
 
-  def getAccount(p: Long): UserAccount = {
-    Await.result(accountOps ? Get(p), timeout.duration).asInstanceOf[UserAccount]
+  override def preStart() {
+    accountOps ! BalanceOperation(account.id)
   }
 }
