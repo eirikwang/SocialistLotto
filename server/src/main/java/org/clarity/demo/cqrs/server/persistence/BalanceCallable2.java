@@ -8,8 +8,8 @@ import java.util.concurrent.TimeoutException;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
-import org.clarity.demo.cqrs.server.actors.AccountBalance;
-import org.clarity.demo.cqrs.server.actors.AccountChange;
+import org.clarity.demo.cqrs.server.actors.account.AccountBalance;
+import org.clarity.demo.cqrs.server.actors.account.AccountChange;
 
 /**
  * @author Eirik Wang - eirik.wang@bekk.no

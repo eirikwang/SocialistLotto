@@ -1,11 +1,11 @@
-package org.clarity.demo.cqrs.server.actors
+package org.clarity.demo.cqrs.server.actors.account
 
 import akka.testkit.{TestProbe, ImplicitSender, TestKit, TestActorRef}
 import org.scalatest._
 import matchers.MustMatchers
-import org.clarity.demo.cqrs.server.actors.Account.{ReceiveAction, Balance, SendAction}
+import org.clarity.demo.cqrs.server.actors.account.Account.{ReceiveAction, Balance, SendAction}
 import akka.actor.ActorSystem
-import persistence.AccountStorage.AccountDetail
+import org.clarity.demo.cqrs.server.actors.persistence.AccountStorage.AccountDetail
 
 /**
  * @author Eirik Wang - eirik.wang@bekk.no

@@ -1,19 +1,13 @@
-package org.clarity.demo.cqrs.server.actors
+package org.clarity.demo.cqrs.server.actors.account
 
 import akka.actor.{Failed, ActorRef, Props, Actor}
 import akka.pattern.ask
 import akka.util.Timeout
 import akka.util.duration._
 import akka.dispatch.Await
-import db.AccountOperation.BeginTransaction
-import db.AccountOperation.Change
-import db.AccountOperation.Get
-import org.clarity.demo.cqrs.server.objects.UserAccount
-import org.clarity.demo.cqrs.server.objects.UserAccount
-import org.clarity.demo.cqrs.server.actors.Account.{AccountOperation, Balance, ReceiveAction, SendAction}
-import persistence.AccountStorage.{AccountDetail, BalanceOperation}
-import org.clarity.demo.cqrs.server.exceptions.AccountNotAvailableException
 import akka.event.LoggingReceive
+import org.clarity.demo.cqrs.server.actors.persistence.AccountStorage.{AccountDetail, BalanceOperation}
+import org.clarity.demo.cqrs.server.actors.account.Account.{ReceiveAction, SendAction, Balance, AccountOperation}
 
 
 abstract case class TransactionStatus()
@@ -94,3 +88,5 @@ class Account(account: AccountDetail) extends Actor {
     accountOps ! BalanceOperation(account.id)
   }
 }
+
+

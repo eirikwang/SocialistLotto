@@ -1,4 +1,4 @@
-package org.clarity.demo.cqrs.server.actors
+package org.clarity.demo.cqrs.server.actors.account
 
 /**
  * @author Eirik Wang - eirik.wang@bekk.no

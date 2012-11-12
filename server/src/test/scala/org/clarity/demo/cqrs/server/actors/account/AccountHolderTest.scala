@@ -1,14 +1,15 @@
-package org.clarity.demo.cqrs.server.actors
+package org.clarity.demo.cqrs.server.actors.account
 
 import akka.testkit.{TestProbe, ImplicitSender, TestKit, TestActorRef}
 import org.scalatest._
 import matchers.MustMatchers
-import org.clarity.demo.cqrs.server.actors.Account.{ReceiveAction, Balance, SendAction}
-import akka.actor.ActorSystem
+import org.clarity.demo.cqrs.server.actors.account.Account.Balance
+import akka.actor.{Props, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
 import akka.util.duration._
 import akka.dispatch.Await
+import org.clarity.demo.cqrs.server.actors.account.AccountHolder.{Created, CreateAccount}
 
 
 /**
@@ -21,18 +22,20 @@ class AccountHolderTest(_system: ActorSystem) extends TestKit(_system) with Impl
 
 
 
+val testProbe = TestProbe()
+ system.actorOf(Props(ctx => {
+   case msg => testActor ! msg;println("msg: " + msg); testProbe.ref ! msg
+ }), "persistence/accounts")
+
   override def afterAll() {
     system.shutdown()
   }
 
   "AccountHolder" must {
-    "CreateActorWhenNotStarted" in {
-      val actorRec = TestActorRef(new AccountHolder(), "accounts")
-      val actorOf = system.actorFor("/user/accounts/1")
-      println(actorOf.isTerminated)
-      println(actorRec)
-      val p = actorOf ? Balance
-      Await.result(p, timeout.duration)
+    "CreateActor" in {
+      val actorRec = TestActorRef(new AccountHolder, "accounts")
+      actorRec ! CreateAccount("new account")
+      testProbe.expectMsg(CreateAccount)
     }
   }
 

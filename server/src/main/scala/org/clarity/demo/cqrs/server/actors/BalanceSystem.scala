@@ -1,5 +1,6 @@
 package org.clarity.demo.cqrs.server.actors
 
+import account.AccountHolder
 import akka.actor.{Actor, ActorRef, Props, ActorSystem}
 import akka.pattern.ask
 

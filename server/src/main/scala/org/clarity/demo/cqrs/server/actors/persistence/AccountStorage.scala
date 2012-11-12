@@ -2,15 +2,14 @@ package org.clarity.demo.cqrs.server.actors.persistence
 
 import akka.actor.{ActorSystem, Actor}
 import com.hazelcast.client.HazelcastClient
-import com.hazelcast.core.{MultiMap, IMap}
+import com.hazelcast.core.{IdGenerator, MultiMap, IMap}
 import operations.BalanceCallable
-import org.clarity.demo.cqrs.server.actors.{AccountBalance, AccountChange}
+import org.clarity.demo.cqrs.server.actors.account.{AccountChange, AccountBalance}
 import org.clarity.demo.cqrs.server.actors.persistence.AccountStorage._
 import java.util.concurrent.{Callable, TimeUnit}
 import akka.util.Deadline
 import util.control.Exception.allCatch
 import akka.util.duration._
-import org.clarity.demo.cqrs.server.actors.Account.Balance
 import akka.dispatch.{Create, ExecutionContext, Promise}
 import org.clarity.demo.cqrs.server.actors.persistence.AccountStorage.AccountOperation
 import org.clarity.demo.cqrs.server.actors.persistence.AccountStorage.BalanceOperation
@@ -18,6 +17,7 @@ import collection.JavaConversions
 import org.scalatest.tools.RunningState
 import org.clarity.demo.cqrs.server.SystemState.Started
 import org.clarity.demo.cqrs.server.persistence.BalanceCallable2
+import org.clarity.demo.cqrs.server.actors.account.AccountHolder.{Created, CreateAccount}
 
 
 /**
@@ -60,6 +60,13 @@ class AccountStorage(client: HazelcastClient) extends Actor {
     }
     case AllAccountsOperation => {
       sender ! JavaConversions.mapAsScalaMap(accountDetail)
+    }
+    case CreateAccount(name:String) => {
+      val generator: IdGenerator = client.getIdGenerator("accountId")
+      val newAccount = AccountDetail(generator.newId(), name)
+      accountDetail.put(newAccount.id, newAccount)
+      accountBalance.put(newAccount.id, AccountBalance(newAccount.id, 0))
+      sender ! Created(newAccount)
     }
   }
 

@@ -4,7 +4,7 @@ import com.hazelcast.client.{ClientConfig, HazelcastClient}
 import com.hazelcast.core.IMap
 import org.clarity.demo.cqrs.server.actors.persistence.AccountStorage.AccountDetail
 import collection.JavaConversions
-import org.clarity.demo.cqrs.server.actors.AccountBalance
+import org.clarity.demo.cqrs.server.actors.account.AccountBalance
 
 /**
  * @author Eirik Wang - eirik.wang@bekk.no

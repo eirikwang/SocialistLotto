@@ -1,12 +1,13 @@
 package org.clarity.demo.cqrs.server.actors
 
+import account.{Rejected, Cleared, Account}
 import akka.actor.{ActorRef, Props, Actor}
 import akka.pattern.ask
 import org.clarity.demo.cqrs.server.actors.PaymentProcessor.Send
 import akka.util.Timeout
 import akka.util.duration._
 import org.clarity.demo.cqrs.server.objects.UserTransaction
-import org.clarity.demo.cqrs.server.actors.Account.SendAction
+import org.clarity.demo.cqrs.server.actors.account.Account.SendAction
 import persistence.AccountStorage.AccountDetail
 
 object PaymentProcessor {
