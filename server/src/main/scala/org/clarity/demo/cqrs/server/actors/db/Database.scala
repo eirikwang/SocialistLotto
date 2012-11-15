@@ -10,11 +10,8 @@ import akka.dispatch.Create
 import org.clarity.demo.cqrs.server.actors.persistence.AccountStorage
 import com.hazelcast.client.{ClientConfig, HazelcastClient}
 
-class Database extends Actor with ActorLogging {
+class Database(client:HazelcastClient) extends Actor with ActorLogging {
   implicit val timeout = Timeout(60 seconds)
-  val client = HazelcastClient.newHazelcastClient(new ClientConfig() {
-    addAddress("localhost")
-  })
 
   val accounts = context.actorOf(Props(new AccountStorage(client)).withRouter(
     RoundRobinRouter(nrOfInstances = 5)), "accounts")

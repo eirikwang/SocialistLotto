@@ -10,16 +10,17 @@ import akka.util.Timeout
 import akka.util.duration._
 import akka.dispatch.Await
 import org.clarity.demo.cqrs.server.actors.account.AccountHolder.{Created, CreateAccount}
+import org.clarity.demo.cqrs.server.actors.db.DbClient
+import org.scalamock.scalatest.MockFactory
 
 
 /**
  * @author Eirik Wang - eirik.wang@bekk.no
  * @since 2.2 TODO: Check version
  */
-class AccountHolderTest(_system: ActorSystem) extends TestKit(_system) with ImplicitSender with WordSpec with MustMatchers with BeforeAndAfterAll {
+class AccountHolderTest(_system: ActorSystem) extends TestKit(_system) with ImplicitSender with WordSpec with MustMatchers with BeforeAndAfterAll with MockFactory {
   def this() = this(ActorSystem("AccountHolderTest"))
   implicit val timeout = Timeout(60 seconds)
-
 
 
 val testProbe = TestProbe()

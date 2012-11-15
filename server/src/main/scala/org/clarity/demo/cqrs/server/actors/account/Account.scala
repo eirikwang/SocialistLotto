@@ -36,12 +36,13 @@ object Account {
 }
 
 
-class Account(account: AccountDetail) extends Actor {
-  var accountOps = context.actorFor("/user/persistence/accounts")
+class Account(accountOps:ActorRef, account: AccountDetail) extends Actor {
+
   implicit val timeout = Timeout(5 seconds)
   var backlog = IndexedSeq.empty[(ActorRef, AccountOperation)]
 
   var balance:Double = 0
+
   protected def receive = uninitialized
 
   def uninitialized = LoggingReceive {

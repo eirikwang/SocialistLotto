@@ -11,10 +11,11 @@ import org.clarity.demo.cqrs.server.actors.persistence.AccountStorage.AccountDet
  * @author Eirik Wang - eirik.wang@bekk.no
  * @since 2.2 TODO: Check version
  */
-class AccountTest(_system: ActorSystem) extends TestKit(_system) with ImplicitSender with WordSpec with MustMatchers with BeforeAndAfterAll {
+class AccountTest(_system: ActorSystem) extends TestKit(_system)
+  with ImplicitSender with WordSpec with MustMatchers with BeforeAndAfterAll {
   def this() = this(ActorSystem("AccountTest"))
 
-
+  val dbProbe = TestProbe()
 
   override def afterAll() {
     system.shutdown()
@@ -22,8 +23,7 @@ class AccountTest(_system: ActorSystem) extends TestKit(_system) with ImplicitSe
 
   "Account" must {
     "change balance when riches are received" in {
-      val actorRef = TestActorRef(new Account(AccountDetail(1, "name")))
-      val actorRef2 = TestActorRef(new Account(AccountDetail(2, "name")))
+      val actorRef = TestActorRef(new Account(dbProbe.ref, AccountDetail(1, "name")))
       actorRef ! AccountBalance(1L, 0)
       actorRef ! ReceiveAction(1, 2, 1.0)
       actorRef ! ReceiveAction(1, 2, 2.0)
@@ -34,7 +34,7 @@ class AccountTest(_system: ActorSystem) extends TestKit(_system) with ImplicitSe
     }
 
     "place items in backlog while initializing" in {
-      val actorRef = TestActorRef(new Account(AccountDetail(1, "name")))
+      val actorRef = TestActorRef(new Account(dbProbe.ref, AccountDetail(1, "name")))
       actorRef ! ReceiveAction(1, 2, 1.0)
       actorRef ! ReceiveAction(1, 2, 2.0)
       actorRef ! Balance
@@ -45,7 +45,7 @@ class AccountTest(_system: ActorSystem) extends TestKit(_system) with ImplicitSe
     }
 
     "change balance when riches is spread" in {
-      val actorRef = TestActorRef(new Account(AccountDetail(1, "name")))
+      val actorRef = TestActorRef(new Account(dbProbe.ref, AccountDetail(1, "name")))
       val probe = TestProbe()
       actorRef ! AccountBalance(1L, 0)
       actorRef ! ReceiveAction(1, 2, 3.0)
@@ -59,8 +59,8 @@ class AccountTest(_system: ActorSystem) extends TestKit(_system) with ImplicitSe
     }
 
     "reject when trying to use more than ur riches current" in {
-      val actorRef = TestActorRef(new Account(AccountDetail(1, "name")))
-      val nextActor = TestActorRef(new Account(AccountDetail(2, "name")))
+      val actorRef = TestActorRef(new Account(dbProbe.ref, AccountDetail(1, "name")))
+      val nextActor = TestActorRef(new Account(dbProbe.ref, AccountDetail(2, "name")))
       actorRef ! AccountBalance(1L, 0)
       actorRef ! ReceiveAction(1, 2, 3.0)
       actorRef ! SendAction(2, 1, 4.0, nextActor)

@@ -9,6 +9,7 @@ configure(scalaProjects()) {
 
         // Libraries needed for scala api
         compile 'org.scala-lang:scala-library:2.9.2'
+
         compile 'com.google.inject:guice:3.0'
     }
     task initProjectStructure() << {
