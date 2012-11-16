@@ -5,21 +5,21 @@ import org.eclipse.jetty.webapp.WebAppContext
 import org.eclipse.jetty.server.bio.SocketConnector
 import com.hazelcast.core.{IMap, HazelcastInstance, Hazelcast}
 import com.hazelcast.config.ClasspathXmlConfig
-import org.clarity.demo.cqrs.domain.Project
-import org.clarity.demo.cqrs.server.dao.{ProjectWriteDao, ProjectWriteDaoImpl}
 import com.hazelcast.client.{ClientConfig, HazelcastClient}
 import org.clarity.demo.cqrs.server.actors.persistence.AccountStorage.AccountDetail
+import org.clarity.demo.cqrs.server.actors.account.AccountBalance
 
 object JettyServer {
-  def projectWriteDao:ProjectWriteDao = new ProjectWriteDaoImpl
   def initHZ() = {
     val newHazelcastInstance: HazelcastInstance = Hazelcast.newHazelcastInstance(new ClasspathXmlConfig("hazelcast.xml"))
     def hazelcast = HazelcastClient.newHazelcastClient(new ClientConfig() {
       addAddress("localhost")
     })
     val map: IMap[Long, AccountDetail] = hazelcast.getMap("accountDetail")
+    val bal: IMap[Long, AccountBalance] = hazelcast.getMap("accountBalance")
     for(i <- 1 to 100) {
       map.put(i, AccountDetail(i, "Account" + i))
+      bal.put(i, AccountBalance(i, 100))
     }
   }
 

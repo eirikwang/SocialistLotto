@@ -28,7 +28,7 @@ trait AccountChange{
 }
 object Account {
   trait AccountOperation
-  case class SendAction(participant: Long, account:Long, amount: Double, send:ActorRef) extends AccountOperation with AccountChange{
+  case class SendAction(participant: Long, account:Long, amount: Double, send:ActorRef, sender:ActorRef = null) extends AccountOperation with AccountChange{
     def genReceiveAction() = ReceiveAction(participant, account, amount)
   }
   case class ReceiveAction(account: Long, participant:Long, amount: Double) extends AccountOperation with AccountChange
@@ -70,6 +70,7 @@ class Account(accountOps:ActorRef, account: AccountDetail) extends Actor {
       } else {
         balance -= p.amount
         accountOps ! p
+        p.sender! "Ok"
         p.send ! p.genReceiveAction()
       }
     }

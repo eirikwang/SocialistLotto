@@ -38,7 +38,7 @@ class BalanceSystem {
     system.actorFor("./accounts") ! Send(UserTransaction(Random.nextInt(100), Random.nextInt(100), 1))
   }
 }
-class UserListener extends Actor{
+class UserListener() extends Actor{
   protected def receive = {
     case u: UserAccount => println("Account changed: " + u)
   }

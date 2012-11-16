@@ -1,1 +1,1 @@
-include 'common', 'server', 'api', 'web'
+include 'common', 'server','web', 'frontend'

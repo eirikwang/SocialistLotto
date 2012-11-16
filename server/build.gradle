@@ -6,6 +6,8 @@ dependencies {
 
     compile 'com.typesafe.akka:akka-actor:2.0.3'
     compile 'com.typesafe.akka:akka-kernel:2.0.3'
+    compile 'com.typesafe.akka:akka-remote:2.0.3'
+    compile 'com.typesafe.akka:akka-slf4j:2.0.3'
     testCompile 'com.typesafe.akka:akka-testkit:2.0.3'
     testCompile 'org.scalamock:scalamock-scalatest-support_2.9.2:2.4'
 }

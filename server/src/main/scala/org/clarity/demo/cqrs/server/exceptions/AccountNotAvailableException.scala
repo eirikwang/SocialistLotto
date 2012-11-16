@@ -5,3 +5,4 @@ package org.clarity.demo.cqrs.server.exceptions
  * @since 2.2 TODO: Check version
  */
 case class AccountNotAvailableException(message: String) extends RuntimeException
+case class AccountClosedException(message: String) extends RuntimeException

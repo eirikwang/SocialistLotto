@@ -16,7 +16,6 @@ import org.clarity.demo.cqrs.server.actors.persistence.AccountStorage.BalanceOpe
 import collection.JavaConversions
 import org.scalatest.tools.RunningState
 import org.clarity.demo.cqrs.server.SystemState.Started
-import org.clarity.demo.cqrs.server.persistence.BalanceCallable2
 import org.clarity.demo.cqrs.server.actors.account.AccountHolder.{Created, CreateAccount}
 
 
@@ -29,7 +28,7 @@ object AccountStorage {
   case class AccountOperation(account: Long, participant: Long, amount: Double, timestamp: Long)
   case class BalanceOperation(account: Long)
   case object AllAccountsOperation
-  case class AccountDetail(id:Long, name: String)
+  @SerialVersionUID(147l) case class AccountDetail(id:Long, name: String)
 
 }
 
@@ -62,11 +61,15 @@ class AccountStorage(client: HazelcastClient) extends Actor {
       sender ! JavaConversions.mapAsScalaMap(accountDetail)
     }
     case CreateAccount(name:String) => {
+      println("CreateAccount: " + name)
       val generator: IdGenerator = client.getIdGenerator("accountId")
       val newAccount = AccountDetail(generator.newId(), name)
       accountDetail.put(newAccount.id, newAccount)
       accountBalance.put(newAccount.id, AccountBalance(newAccount.id, 0))
       sender ! Created(newAccount)
+    }
+    case o:Object => {
+      println("received not treated: " + o)
     }
   }
 
